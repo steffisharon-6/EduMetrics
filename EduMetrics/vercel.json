@@ -1,0 +1,5 @@
+{
+  "buildCommand": "echo 'Deploying as static site for stlite'",
+  "outputDirectory": ".",
+  "cleanUrls": true
+}
