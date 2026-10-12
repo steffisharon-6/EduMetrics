@@ -4,7 +4,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import base64
 import os
+from pathlib import Path
 from functions import load_data, get_class_statistics, get_subject_summaries
+
+BASE_DIR = Path(__file__).resolve().parent
+DATA_PATH = BASE_DIR / "students.csv"
 
 st.set_page_config(
     page_title="EduMetrics | Orbital Intelligence",
@@ -20,7 +24,7 @@ def get_base64_of_bin_file(bin_file):
         return base64.b64encode(data).decode()
     return ""
 
-hero_bg = get_base64_of_bin_file('hero_bg.jpg')
+hero_bg = get_base64_of_bin_file(str(BASE_DIR / 'hero_bg.jpg'))
 
 # ----------------- CSS FOR ORBITAL INTELLIGENCE THEME -----------------
 st.markdown(f"""
@@ -293,12 +297,11 @@ st.markdown(f"""
 
 # ----------------- SESSION STATE & DATA -----------------
 if 'df' not in st.session_state:
-    try:
-        df, msg = load_data('students.csv')
-        st.session_state.df = df
-    except:
-        st.session_state.df = None
-
+    df, msg = load_data(str(DATA_PATH))
+    st.session_state.df = df
+    if df is None:
+        st.error(f"Could not load dataset: {msg}")
+        st.info("Check that students.csv exists in the same folder as main.py.")
 
 df = st.session_state.df
 stats = get_class_statistics(df) if df is not None else None
@@ -381,7 +384,7 @@ div[role="radiogroup"] > label span[data-baseweb="radio"] {
             st.rerun()
             
     if st.button("↻ Restore Default Data", use_container_width=True):
-        st.session_state.df, _ = load_data('students.csv')
+        st.session_state.df, _ = load_data(str(DATA_PATH))
         st.rerun()
 
 # ----------------- ROUTING -----------------
@@ -690,7 +693,7 @@ elif page == "👥 Students":
         st.markdown('<div class="glass-panel">', unsafe_allow_html=True)
         
         a_num = (hash(str(sid)) % 3) + 1
-        b64 = get_base64_of_bin_file(f"assets/student_avatars/avatar_00{a_num}.jpg")
+        b64 = get_base64_of_bin_file(str(BASE_DIR / 'assets' / 'student_avatars' / f'avatar_00{a_num}.jpg'))
         if st.session_state.get('show_avatars', True) and b64:
             img_html = f'<img src="data:image/jpeg;base64,{b64}" style="width:140px; height:140px; border-radius:50%; object-fit:cover; border: 4px solid var(--color-electric); box-shadow: 0 8px 25px rgba(168, 85, 247, 0.4); margin-bottom: 24px; transition: transform 0.3s ease;">'
         else:
@@ -1124,7 +1127,7 @@ elif page == "⚙️ Settings":
             rc1, rc2 = st.columns(2)
             with rc1:
                 if st.button("Yes, Reset System", use_container_width=True):
-                    st.session_state.df, _ = load_data('students.csv')
+                    st.session_state.df, _ = load_data(str(DATA_PATH))
                     st.session_state.show_avatars = True
                     st.session_state.show_chart_labels = False
                     st.session_state.default_sort = 'Student_ID'
@@ -1146,6 +1149,3 @@ elif page == "⚙️ Settings":
         st.markdown(f"**Streamlit Engine:** {st_core.__version__}")
         st.markdown(f"**Configured Modules:** 5")
         st.markdown('</div>', unsafe_allow_html=True)
-
-
-
